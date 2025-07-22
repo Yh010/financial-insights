@@ -1,12 +1,14 @@
 from google import genai
 from google.genai import types
 import base64
+from typing import List, Optional
 
-def generate(user_prompt: str) -> str:
+def generate(user_prompt: str, image_bytes_list: Optional[List[bytes]] = None) -> str:
     """
-    Generate a response from the Gemini model given a user prompt.
+    Generate a response from the Gemini model given a user prompt and optional images.
     Args:
         user_prompt (str): The user's input prompt.
+        image_bytes_list (List[bytes], optional): List of image bytes to send to Gemini.
     Returns:
         str: The generated response from the Gemini model.
     """
@@ -17,12 +19,15 @@ def generate(user_prompt: str) -> str:
     )
 
     model = "gemini-2.5-flash-lite"
+    parts = [types.Part.from_text(text=user_prompt)]
+    if image_bytes_list:
+        for img_bytes in image_bytes_list:
+            parts.append(types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"))
+
     contents = [
         types.Content(
             role="user",
-            parts=[
-                types.Part.from_text(text=user_prompt)
-            ]
+            parts=parts
         )
     ]
 
