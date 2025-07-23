@@ -3,6 +3,8 @@ from typing import List
 from app.functions.gemini import generate
 from app.functions.extractor import extract
 import re, json
+from app.rag_test.prepare_corpus_and_data import upload_files_to_rag_corpus
+from app.rag_test.agent import router as rag_test_router
 
 app = FastAPI()
 
@@ -29,3 +31,10 @@ def gemini(images: List[UploadFile] = File(None)):
     except Exception:
         parsed = cleaned  # fallback: return raw if not valid JSON
     return parsed 
+
+@app.post("/rag/upload")
+def rag_upload(files: List[UploadFile] = File(...)):
+    uploaded = upload_files_to_rag_corpus(files)
+    return {"uploaded": uploaded} 
+
+app.include_router(rag_test_router) 
