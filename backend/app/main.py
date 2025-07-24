@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 from app.wallet_service.wallet_service import generate_wallet_pass_link
 from pydantic import BaseModel, Field
 
+import re, json
+from app.rag_test.prepare_corpus_and_data import upload_files_to_rag_corpus
+from app.rag_test.agent import router as rag_test_router
 
 app = FastAPI()
 
@@ -177,3 +180,9 @@ async def tool_create_receipt_pass(receipt_data: ReceiptData):
     
     # The agent will receive this URL and can present it to the user.
     return {"wallet_save_url": save_url}
+@app.post("/rag/upload")
+def rag_upload(files: List[UploadFile] = File(...)):
+    uploaded = upload_files_to_rag_corpus(files)
+    return {"uploaded": uploaded} 
+
+app.include_router(rag_test_router) 
