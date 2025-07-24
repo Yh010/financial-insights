@@ -82,3 +82,5 @@ junit-*.xml
 
 # uvicorn reload artifacts
 reload.db
+
+backend/app/jwt/
