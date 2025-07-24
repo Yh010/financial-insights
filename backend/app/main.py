@@ -9,17 +9,17 @@ from fastapi import HTTPException
 from dotenv import load_dotenv
 from app.wallet_service.wallet_service import generate_wallet_pass_link
 from pydantic import BaseModel, Field
-
-import re, json
-from app.rag_test.prepare_corpus_and_data import upload_files_to_rag_corpus
-from app.rag_test.agent import router as rag_test_router
+from app.rag_test.prepare_corpus_and_data import upload_user_documents_to_corpus
+#from app.rag_test.agent import router as rag_test_router
 
 app = FastAPI()
 
 load_dotenv(dotenv_path="app/.env")
 ISSUER_ID = os.getenv("WALLET_ISSUER_ID")
+#GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 #ISSUER_ID = "3388000000022967770"
 print(ISSUER_ID)
+#print(GOOGLE_CLOUD_PROJECT)
 SERVICE_ACCOUNT_FILE = "app/jwt/rasheed-466715-3cf75e00c9e8.json"
 PASS_CLASS_SUFFIX = "receipt_pass_class"
 
@@ -180,9 +180,10 @@ async def tool_create_receipt_pass(receipt_data: ReceiptData):
     
     # The agent will receive this URL and can present it to the user.
     return {"wallet_save_url": save_url}
+
 @app.post("/rag/upload")
 def rag_upload(files: List[UploadFile] = File(...)):
     uploaded = upload_files_to_rag_corpus(files)
     return {"uploaded": uploaded} 
 
-app.include_router(rag_test_router) 
+#app.include_router(rag_test_router) 

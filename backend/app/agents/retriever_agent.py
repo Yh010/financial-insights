@@ -4,7 +4,7 @@ from google.adk.tools.retrieval.vertex_ai_rag_retrieval import VertexAiRagRetrie
 from vertexai.preview import rag
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path="app/.env")
 
 RETRIEVER_AGENT_PROMPT = """
 You are a Retrieval-Augmented Generation (RAG) assistant. Your job is to answer user questions using ONLY the information found in the provided document corpus. You do not have access to any external knowledge or the internet.

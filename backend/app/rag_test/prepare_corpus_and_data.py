@@ -5,7 +5,7 @@ from vertexai.preview import rag
 from dotenv import load_dotenv, set_key
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(dotenv_path="app/.env")
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 if not PROJECT_ID:
