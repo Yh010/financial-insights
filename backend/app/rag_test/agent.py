@@ -5,7 +5,7 @@ from vertexai.preview import rag
 from dotenv import load_dotenv
 from .prompts import return_instructions_root
 
-load_dotenv()
+load_dotenv(dotenv_path="app/.env")
 
 ask_vertex_retrieval = VertexAiRagRetrieval(
     name='retrieve_rag_documentation',
