@@ -10,7 +10,8 @@ MODEL = "gemini-2.5-pro"
 greeter_agent = Agent(
     model=MODEL,
     name="greeter_agent",
+    description="Greets the user warmly when they start a conversation or say hello.",
     instruction=prompt.GREETER_AGENT_PROMPT,
     output_key="greeter_agent_output",
-    tools=[google_search],
+    #tools=[google_search],
 )

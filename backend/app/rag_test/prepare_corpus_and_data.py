@@ -16,6 +16,8 @@ if not LOCATION:
 CORPUS_DISPLAY_NAME = "User_Uploaded_Corpus"
 CORPUS_DESCRIPTION = "Corpus containing user-uploaded documents."
 ENV_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+print(ENV_FILE_PATH);
+
 
 def initialize_vertex_ai():
     credentials, _ = default()
@@ -47,6 +49,8 @@ def upload_user_documents_to_corpus(file_paths):
     """
     initialize_vertex_ai()
     corpus = create_or_get_corpus()
+    print("Finished creating or getting corpus")
+    print("corpus.name",corpus.name)
     set_key(ENV_FILE_PATH, "RAG_CORPUS", corpus.name)
     uploaded = []
     for file_path in file_paths:
