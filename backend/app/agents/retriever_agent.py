@@ -46,8 +46,9 @@ ask_vertex_retrieval = VertexAiRagRetrieval(
 retriever_agent = Agent(
     model='gemini-2.5-pro',
     name='retriever_agent',
+    description="Answers user questions by retrieving information from their uploaded documents.",
     instruction=RETRIEVER_AGENT_PROMPT,
     tools=[
         ask_vertex_retrieval,
-    ]
+    ],
 ) 

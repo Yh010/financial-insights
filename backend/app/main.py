@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 from app.wallet_service.wallet_service import generate_wallet_pass_link
 from pydantic import BaseModel, Field
 from app.rag_test.prepare_corpus_and_data import upload_user_documents_to_corpus
+from app.api import chat
+from fastapi.middleware.cors import CORSMiddleware
 #from app.rag_test.agent import router as rag_test_router
 
 app = FastAPI()
@@ -22,6 +24,24 @@ print(ISSUER_ID)
 #print(GOOGLE_CLOUD_PROJECT)
 SERVICE_ACCOUNT_FILE = "app/jwt/rasheed-466715-3cf75e00c9e8.json"
 PASS_CLASS_SUFFIX = "receipt_pass_class"
+
+origins = [
+    "http://localhost",         # For local development
+    "http://localhost:3000",    # For local React development
+    "http://localhost:5173",    # For local Vite/React development
+    "https://your-deployed-frontend-url.com", # Your production frontend
+    "*"                         # A wildcard for open access (use with caution)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"], # Allows all headers
+)
+
+app.include_router(chat.router, prefix="/api", tags=["Agent"])
 
 class ReceiptData(BaseModel):
     merchant_name: str
@@ -186,4 +206,5 @@ def rag_upload(files: List[UploadFile] = File(...)):
     uploaded = upload_files_to_rag_corpus(files)
     return {"uploaded": uploaded} 
 
+ 
 #app.include_router(rag_test_router) 
