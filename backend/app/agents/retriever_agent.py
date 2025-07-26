@@ -50,5 +50,5 @@ retriever_agent = Agent(
     instruction=RETRIEVER_AGENT_PROMPT,
     tools=[
         ask_vertex_retrieval,
-    ]
+    ],
 ) 
