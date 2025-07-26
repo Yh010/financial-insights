@@ -49,6 +49,8 @@ def upload_user_documents_to_corpus(file_paths):
     """
     initialize_vertex_ai()
     corpus = create_or_get_corpus()
+    print("Finished creating or getting corpus")
+    print("corpus.name",corpus.name)
     set_key(ENV_FILE_PATH, "RAG_CORPUS", corpus.name)
     uploaded = []
     for file_path in file_paths:

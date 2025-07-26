@@ -9,7 +9,7 @@ from .sub_agents.greeter_agent import greeter_agent
 #from .sub_agents.extractor_agent import extractor_agent
 #from .agents.corpus_uploader_agent import corpus_uploader_agent
 from .agents.retriever_agent import retriever_agent
-#from .agents.pass_generator_agent import pass_generator_agent
+from .agents.pass_generator_agent import pass_generator_agent
 from .agents.receipt_processor_agent import receipt_processor_agent
 import vertexai
 from vertexai import agent_engines
@@ -43,7 +43,7 @@ financial_coordinator = Agent(
         AgentTool(agent=receipt_processor_agent),
         #AgentTool(agent=corpus_uploader_agent),
         AgentTool(agent=retriever_agent),
-        #AgentTool(agent=pass_generator_agent),
+        AgentTool(agent=pass_generator_agent),
     ],
     #sub_agents=[greeter_agent,extractor_agent,retriever_agent],
 )
