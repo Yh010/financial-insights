@@ -3,6 +3,11 @@ from google.genai import types
 import base64
 from typing import List, Optional
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=".env")
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 
 def extract(image_bytes_list: Optional[List[bytes]] = None) -> str:
     """
@@ -13,9 +18,10 @@ def extract(image_bytes_list: Optional[List[bytes]] = None) -> str:
     Returns:
         str: The generated response from the Gemini model.
     """
+
     client = genai.Client(
         vertexai=True,
-        project="deft-justice-466615-b0",
+        project=PROJECT_ID,
         location="global",
     )
     user_prompt="""

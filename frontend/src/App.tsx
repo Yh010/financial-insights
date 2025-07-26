@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { AgentMessage } from './components/AgentMessage';
-import { Paperclip, SendHorizonal, XCircle } from 'lucide-react';
+import { Paperclip, SendHorizonal, XCircle, Mic, MicOff } from 'lucide-react';
 
 // Define the structure for a chat message
 interface Message {
@@ -8,6 +8,8 @@ interface Message {
   role: 'user' | 'agent';
   text: string;
   imageUrl?: string;
+  audioUrl?: string;
+  audioFileName?: string;
 }
 
 // Define the expected structure of the API response
@@ -30,8 +32,12 @@ function App() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messageIdCounter = useRef(messages.length + 1);
 
@@ -53,11 +59,63 @@ function App() {
     }
   };
 
+  const handleAudioFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedAudioFile(event.target.files[0]);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      
+      const chunks: Blob[] = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioFile = new File([audioBlob], 'recorded_audio.webm', { type: 'audio/webm' });
+        setSelectedAudioFile(audioFile);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      alert('Could not access microphone. Please check permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleAudioToggle = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedText = inputValue.trim();
-    if (!trimmedText && !selectedFile) return;
+    if (!trimmedText && !selectedFile && !selectedAudioFile) return;
 
     setIsLoading(true);
 
@@ -66,6 +124,8 @@ function App() {
       role: 'user',
       text: trimmedText,
       imageUrl: selectedFile ? URL.createObjectURL(selectedFile) : undefined,
+      audioUrl: selectedAudioFile ? URL.createObjectURL(selectedAudioFile) : undefined,
+      audioFileName: selectedAudioFile?.name,
     };
 
     // --- FIX IS HERE ---
@@ -75,11 +135,17 @@ function App() {
     if (selectedFile) {
       formData.append('images', selectedFile); // Changed 'image' to 'images'
     }
+    if (selectedAudioFile) {
+      formData.append('audio_files', selectedAudioFile); // Add audio files
+    }
     // --- END OF FIX ---
 
     console.log('📤 Sending query:', trimmedText);
     if (selectedFile) {
-      console.log('📎 Sending file:', selectedFile.name);
+      console.log('📎 Sending image file:', selectedFile.name);
+    }
+    if (selectedAudioFile) {
+      console.log('🎤 Sending audio file:', selectedAudioFile.name);
     }
 
     setMessages((prev) => [...prev, userMessage]);
@@ -110,6 +176,7 @@ function App() {
       setMessages((prev) => [...prev, agentMessage]);
       setInputValue('');
       setSelectedFile(null);
+      setSelectedAudioFile(null);
     } catch (error) {
       console.error('❌ Error during fetch:', error);
 
@@ -130,9 +197,17 @@ function App() {
   return (
     <div className="flex h-screen flex-col bg-gray-50 font-sans">
       <header className="border-b bg-white p-4 shadow-sm">
-        <h1 className="text-xl font-bold text-gray-800 text-center">
-          Project Raseed 🧾
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-bold text-gray-800">
+            Project Raseed 🧾
+          </h1>
+          <a
+            href="/test"
+            className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600"
+          >
+            🎤 Test Audio
+          </a>
+        </div>
       </header>
 
       <main
@@ -157,6 +232,16 @@ function App() {
                       alt="Uploaded receipt"
                       className="mb-2 rounded-lg max-h-48"
                     />
+                  )}
+                  {msg.audioUrl && (
+                    <div className="mb-2 flex items-center gap-2 rounded-lg bg-blue-600 p-2">
+                      <Mic size={16} />
+                      <span className="text-sm">{msg.audioFileName || 'Audio file'}</span>
+                      <audio controls className="max-w-full">
+                        <source src={msg.audioUrl} type="audio/webm" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
                   )}
                   <p className="whitespace-pre-wrap">{msg.text || '...'}</p>
                 </div>
@@ -187,11 +272,25 @@ function App() {
           {selectedFile && (
             <div className="mb-2 flex items-center justify-between rounded-lg bg-gray-100 p-2 text-sm">
               <span className="truncate text-gray-600">
-                {selectedFile.name}
+                📎 {selectedFile.name}
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
+                className="text-gray-500 hover:text-red-500"
+              >
+                <XCircle size={18} />
+              </button>
+            </div>
+          )}
+          {selectedAudioFile && (
+            <div className="mb-2 flex items-center justify-between rounded-lg bg-green-100 p-2 text-sm">
+              <span className="truncate text-gray-600">
+                🎤 {selectedAudioFile.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedAudioFile(null)}
                 className="text-gray-500 hover:text-red-500"
               >
                 <XCircle size={18} />
@@ -214,18 +313,48 @@ function App() {
               accept="image/*"
               className="hidden"
             />
+            <input
+              type="file"
+              ref={audioInputRef}
+              onChange={handleAudioFileChange}
+              accept="audio/*"
+              className="hidden"
+            />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="p-2 text-gray-500 hover:text-blue-500 disabled:opacity-50"
               disabled={isLoading}
+              title="Upload image"
             >
               <Paperclip size={20} />
             </button>
             <button
+              type="button"
+              onClick={() => audioInputRef.current?.click()}
+              className="p-2 text-gray-500 hover:text-green-500 disabled:opacity-50"
+              disabled={isLoading}
+              title="Upload audio file"
+            >
+              <Mic size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={handleAudioToggle}
+              className={`p-2 disabled:opacity-50 ${
+                isRecording 
+                  ? 'text-red-500 hover:text-red-600' 
+                  : 'text-gray-500 hover:text-green-500'
+              }`}
+              disabled={isLoading}
+              title={isRecording ? 'Stop recording' : 'Start recording'}
+            >
+              {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+            </button>
+            <button
               type="submit"
               className="rounded-md bg-blue-500 p-2 text-white shadow-sm transition-colors hover:bg-blue-600 disabled:bg-blue-300"
-              disabled={isLoading || (!inputValue.trim() && !selectedFile)}
+              disabled={isLoading || (!inputValue.trim() && !selectedFile && !selectedAudioFile)}
             >
               <SendHorizonal size={20} />
             </button>

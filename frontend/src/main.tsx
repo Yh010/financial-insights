@@ -8,6 +8,7 @@ import './index.css';
 // Import your page components
 import App from './App.tsx';
 import { LandingPage } from './pages/LandingPage.tsx'; // Assuming LandingPage is in src/pages/
+import { TestPage } from './TestPage.tsx';
 
 // 1. Define your application's routes
 const router = createBrowserRouter([
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
   {
     path: '/app', // The /app path will show the main chat application
     element: <App />,
+  },
+  {
+    path: '/test', // The /test path will show the audio testing interface
+    element: <TestPage />,
   },
 ]);
 

@@ -3,6 +3,7 @@ from fastapi import FastAPI, UploadFile, File, Form
 from typing import List
 from app.functions.gemini import generate
 from app.functions.extractor import extract
+from app.functions.audio_processor import process_audio_receipt, transcribe_audio
 from google.oauth2 import service_account
 from google.auth import transport
 from fastapi import HTTPException
@@ -206,5 +207,133 @@ def rag_upload(files: List[UploadFile] = File(...)):
     uploaded = upload_files_to_rag_corpus(files)
     return {"uploaded": uploaded} 
 
- 
+@app.post("/audio/transcribe")
+async def transcribe_audio_endpoint(
+    audio_file: UploadFile = File(...),
+    language_code: str = Form("en-US")
+):
+    """
+    Transcribe audio to text using Google Cloud Speech-to-Text.
+    
+    Args:
+        audio_file: Audio file (mp3, wav, m4a, etc.)
+        language_code: Language code for transcription (default: en-US)
+    
+    Returns:
+        dict: Transcribed text
+    """
+    try:
+        # Validate file type
+        if not audio_file.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be an audio file")
+        
+        # Read audio file
+        audio_bytes = await audio_file.read()
+        
+        # Transcribe audio
+        transcript = transcribe_audio(audio_bytes, language_code, audio_file.filename)
+        
+        return {
+            "status": "success",
+            "transcript": transcript,
+            "language_code": language_code
+        }
+        
+    except Exception as e:
+        print(f"Error in audio transcription: {e}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+
+@app.post("/audio/process-receipt")
+async def process_audio_receipt_endpoint(
+    audio_file: UploadFile = File(...),
+    language_code: str = Form("en-US")
+):
+    """
+    Process audio receipt: convert to text and extract receipt information.
+    
+    Args:
+        audio_file: Audio file containing receipt information
+        language_code: Language code for transcription (default: en-US)
+    
+    Returns:
+        dict: Extracted receipt information
+    """
+    try:
+        # Validate file type
+        if not audio_file.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be an audio file")
+        
+        # Read audio file
+        audio_bytes = await audio_file.read()
+        
+        # Process audio receipt
+        receipt_data = process_audio_receipt(audio_bytes, language_code, audio_file.filename)
+        
+        return {
+            "status": "success",
+            "receipt_data": receipt_data,
+            "language_code": language_code
+        }
+        
+    except Exception as e:
+        print(f"Error in audio receipt processing: {e}")
+        raise HTTPException(status_code=500, detail=f"Audio processing failed: {str(e)}")
+
+@app.post("/audio/create-pass-from-audio")
+async def create_pass_from_audio_endpoint(
+    audio_file: UploadFile = File(...),
+    language_code: str = Form("en-US")
+):
+    """
+    Complete pipeline: audio → text → receipt extraction → wallet pass creation.
+    
+    Args:
+        audio_file: Audio file containing receipt information
+        language_code: Language code for transcription (default: en-US)
+    
+    Returns:
+        dict: Wallet pass URL
+    """
+    try:
+        # Validate file type
+        if not audio_file.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be an audio file")
+        
+        # Read audio file
+        audio_bytes = await audio_file.read()
+        
+        # Process audio receipt
+        receipt_data_str = process_audio_receipt(audio_bytes, language_code, audio_file.filename)
+        
+        # Parse the JSON response from Gemini
+        import json
+        try:
+            # Clean up the response (remove markdown formatting if present)
+            cleaned_response = receipt_data_str.strip()
+            if cleaned_response.startswith("```json"):
+                cleaned_response = cleaned_response[7:]
+            if cleaned_response.endswith("```"):
+                cleaned_response = cleaned_response[:-3]
+            
+            receipt_data = json.loads(cleaned_response.strip())
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=500, detail=f"Failed to parse receipt data: {str(e)}")
+        
+        # Create wallet pass
+        save_url = generate_wallet_pass_link(receipt_data)
+        
+        if not save_url:
+            raise HTTPException(status_code=500, detail="Failed to generate Google Wallet pass link.")
+        
+        return {
+            "status": "success",
+            "wallet_save_url": save_url,
+            "receipt_data": receipt_data,
+            "transcript": receipt_data_str
+        }
+        
+    except Exception as e:
+        print(f"Error in audio pass creation: {e}")
+        raise HTTPException(status_code=500, detail=f"Audio pass creation failed: {str(e)}")
+
 #app.include_router(rag_test_router) 

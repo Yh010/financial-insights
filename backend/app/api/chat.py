@@ -32,6 +32,7 @@ async def chat_with_agent(
     query: Optional[str] = Form(""),
     #session_id: Optional[str] = Form(None),
     images: Optional[List[UploadFile]] = File(None),
+    audio_files: Optional[List[UploadFile]] = File(None),
 ):
     """
     Handles a stateful, multimodal chat conversation with the root_agent.
@@ -85,9 +86,31 @@ async def chat_with_agent(
     # user_message = types.Content(role="user", parts=message_parts)
 
     final_query = query
+    
+    # Process audio files first if present
+    if audio_files:
+        from ..functions.audio_processor import transcribe_audio
+        audio_transcripts = []
+        for audio_file in audio_files:
+            if not audio_file.content_type.startswith('audio/'):
+                raise HTTPException(status_code=400, detail="Audio file must be an audio file")
+            
+            audio_bytes = await audio_file.read()
+            transcript = transcribe_audio(audio_bytes, filename=audio_file.filename)
+            audio_transcripts.append(transcript)
+        
+        # Combine audio transcripts with the query
+        if audio_transcripts:
+            audio_text = " ".join(audio_transcripts)
+            final_query = f"{final_query} {audio_text}".strip()
+    
     # If there's an image but no text query, add a default one.
-    if images and not query:
+    if images and not final_query:
         final_query = "Analyze the attached image."
+    
+    # If there's audio but no text query, add a default one.
+    if audio_files and not final_query:
+        final_query = "Process the attached audio."
 
     message_parts = [types.Part.from_text(text=final_query)]
     if images:
@@ -95,8 +118,8 @@ async def chat_with_agent(
             image_bytes = await image.read()
             message_parts.append(types.Part.from_bytes(data=image_bytes, mime_type=image.content_type))
             
-    if not final_query and not images:
-        raise HTTPException(status_code=400, detail="Please provide a query or an image.")
+    if not final_query and not images and not audio_files:
+        raise HTTPException(status_code=400, detail="Please provide a query, image, or audio file.")
 
     user_message = types.Content(role="user", parts=message_parts)
 

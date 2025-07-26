@@ -2,6 +2,11 @@ from google import genai
 from google.genai import types
 import base64
 from typing import List, Optional
+import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=".env")
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 
 def generate(user_prompt: str, image_bytes_list: Optional[List[bytes]] = None) -> str:
     """
@@ -12,9 +17,10 @@ def generate(user_prompt: str, image_bytes_list: Optional[List[bytes]] = None) -
     Returns:
         str: The generated response from the Gemini model.
     """
+
     client = genai.Client(
         vertexai=True,
-        project="deft-justice-466615-b0",
+        project=PROJECT_ID,
         location="global",
     )
 
