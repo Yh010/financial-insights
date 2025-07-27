@@ -19,7 +19,7 @@ interface ApiResponse {
   session_id?: string;
 }
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Placeholder for demo
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([
@@ -195,24 +195,37 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50 font-sans">
-      <header className="border-b bg-white p-4 shadow-sm">
-        <div className="flex justify-between items-center">
+    <div className="flex h-screen flex-col bg-gray-100 font-sans relative overflow-hidden">
+      {/* Background geometric shapes */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Blue curved shape - bottom left */}
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-to-tr from-blue-500 to-blue-600 rounded-full opacity-80"></div>
+        
+        {/* Red curved shape - top right */}
+        <div className="absolute -top-24 -right-24 w-80 h-80 bg-gradient-to-bl from-red-500 to-red-600 rounded-full opacity-75"></div>
+        
+        {/* Green shape - middle left */}
+        <div className="absolute top-1/3 left-1/4 w-48 h-48 bg-gradient-to-br from-green-500 to-green-600 rounded-full opacity-30"></div>
+        
+        {/* Yellow shape - bottom right */}
+        <div className="absolute bottom-1/4 right-1/3 w-32 h-32 bg-gradient-to-tr from-yellow-400 to-yellow-500 rounded-full opacity-40"></div>
+        
+        {/* Additional subtle Google color accents */}
+        <div className="absolute top-1/2 right-1/5 w-24 h-24 bg-gradient-to-bl from-blue-400 to-blue-500 rounded-full opacity-20"></div>
+        <div className="absolute bottom-1/3 left-1/5 w-20 h-20 bg-gradient-to-tr from-green-400 to-green-500 rounded-full opacity-25"></div>
+      </div>
+
+      <header className="border-b bg-white/90 backdrop-blur-sm p-4 shadow-sm relative z-10">
+        <div className="flex justify-center items-center">
           <h1 className="text-xl font-bold text-gray-800">
-            Project Raseed 🧾
+            Project <span className="text-blue-500">R</span><span className="text-red-500">a</span><span className="text-yellow-500">s</span><span className="text-blue-500">e</span><span className="text-green-500">e</span><span className="text-red-500">d</span> 🧾
           </h1>
-          <a
-            href="/test"
-            className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600"
-          >
-            🎤 Test Audio
-          </a>
         </div>
       </header>
 
       <main
         ref={chatContainerRef}
-        className="flex-1 space-y-6 overflow-y-auto p-4 md:p-6"
+        className="flex-1 space-y-6 overflow-y-auto p-4 md:p-6 relative z-10"
       >
         {messages.map((msg) => (
           <div
@@ -224,38 +237,38 @@ function App() {
             {msg.role === 'agent' ? (
               <AgentMessage content={msg.text || '...'} />
             ) : (
-              <div className="flex max-w-sm flex-col items-end gap-2">
-                <div className="rounded-lg rounded-br-none bg-blue-500 p-3 text-white whitespace-pre-wrap">
+              <div className="flex max-w-sm flex-col items-end gap-2 min-w-0">
+                <div className="rounded-lg rounded-br-none bg-blue-500 p-3 text-white break-words overflow-hidden">
                   {msg.imageUrl && (
                     <img
                       src={msg.imageUrl}
                       alt="Uploaded receipt"
-                      className="mb-2 rounded-lg max-h-48"
+                      className="mb-2 rounded-lg max-h-48 max-w-full object-contain"
                     />
                   )}
                   {msg.audioUrl && (
-                    <div className="mb-2 flex items-center gap-2 rounded-lg bg-blue-600 p-2">
-                      <Mic size={16} />
-                      <span className="text-sm">{msg.audioFileName || 'Audio file'}</span>
-                      <audio controls className="max-w-full">
+                    <div className="mb-2 flex items-center gap-2 rounded-lg bg-blue-600 p-2 min-w-0">
+                      <Mic size={16} className="shrink-0" />
+                      <span className="text-sm truncate">{msg.audioFileName || 'Audio file'}</span>
+                      <audio controls className="max-w-full min-w-0">
                         <source src={msg.audioUrl} type="audio/webm" />
                         Your browser does not support the audio element.
                       </audio>
                     </div>
                   )}
-                  <p className="whitespace-pre-wrap">{msg.text || '...'}</p>
+                  <p className="whitespace-pre-wrap break-words">{msg.text || '...'}</p>
                 </div>
               </div>
             )}
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="flex items-start gap-3">
+          <div className="flex justify-start max-w-full">
+            <div className="flex items-start gap-3 max-w-full">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-700 text-white font-bold">
                 R
               </div>
-              <div className="rounded-lg rounded-tl-none bg-gray-200 p-3 text-gray-800">
+              <div className="rounded-lg rounded-tl-none bg-gray-200 p-3 text-gray-800 min-w-0">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-gray-500"></div>
                   <div className="h-2 w-2 animate-pulse rounded-full bg-gray-500 [animation-delay:0.2s]"></div>
@@ -267,7 +280,7 @@ function App() {
         )}
       </main>
 
-      <footer className="border-t bg-white p-2 md:p-4">
+      <footer className="border-t bg-white/90 backdrop-blur-sm p-2 md:p-4 relative z-10">
         <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
           {selectedFile && (
             <div className="mb-2 flex items-center justify-between rounded-lg bg-gray-100 p-2 text-sm">
@@ -309,8 +322,17 @@ function App() {
             <input
               type="file"
               ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  const file = e.target.files[0];
+                  if (file.type.startsWith('image/')) {
+                    setSelectedFile(file);
+                  } else if (file.type.startsWith('audio/')) {
+                    setSelectedAudioFile(file);
+                  }
+                }
+              }}
+              accept="image/*,audio/*"
               className="hidden"
             />
             <input
@@ -325,18 +347,9 @@ function App() {
               onClick={() => fileInputRef.current?.click()}
               className="p-2 text-gray-500 hover:text-blue-500 disabled:opacity-50"
               disabled={isLoading}
-              title="Upload image"
+              title="Upload image or audio file"
             >
               <Paperclip size={20} />
-            </button>
-            <button
-              type="button"
-              onClick={() => audioInputRef.current?.click()}
-              className="p-2 text-gray-500 hover:text-green-500 disabled:opacity-50"
-              disabled={isLoading}
-              title="Upload audio file"
-            >
-              <Mic size={20} />
             </button>
             <button
               type="button"
